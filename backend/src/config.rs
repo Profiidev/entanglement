@@ -8,6 +8,7 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use url::Url;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
@@ -18,7 +19,16 @@ pub struct Config {
   #[serde(flatten)]
   pub metrics: MetricsConfig,
 
+  pub oidc_issuer: Url,
+  pub oidc_client_id: String,
+  pub oidc_client_secret: String,
+  pub oidc_scopes: String,
+  pub app_url: Url,
+
   pub db_url: String,
+
+  pub auth_issuer: String,
+  pub auth_jwt_expiration: i64,
 }
 
 impl Default for Config {
@@ -27,10 +37,17 @@ impl Default for Config {
       base: BaseConfig::default(),
       db: DBConfig::default(),
       db_url: "".to_string(),
+      oidc_issuer: "http://localhost".parse().unwrap(),
+      oidc_client_id: "".to_string(),
+      oidc_client_secret: "".to_string(),
+      oidc_scopes: "openid email profile".to_string(),
       metrics: MetricsConfig {
         metrics_name: "entanglement".to_string(),
         ..Default::default()
       },
+      app_url: "http://localhost:5173".parse().unwrap(),
+      auth_issuer: "smaug_auth".to_string(),
+      auth_jwt_expiration: 60 * 60 * 24 * 7, // 7 days
     }
   }
 }
@@ -46,6 +63,10 @@ impl Config {
 
     if config.db_url.is_empty() {
       panic!("Database URL is not set");
+    }
+
+    if config.oidc_client_id.is_empty() || config.oidc_client_secret.is_empty() {
+      panic!("OIDC client ID or secret is not set");
     }
 
     config

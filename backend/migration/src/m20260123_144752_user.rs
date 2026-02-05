@@ -9,11 +9,12 @@ impl MigrationTrait for Migration {
     manager
       .create_table(
         Table::create()
-          .table(Key::Table)
+          .table(User::Table)
           .if_not_exists()
-          .col(pk_uuid(Key::Id))
-          .col(string(Key::Name))
-          .col(string(Key::PrivateKey))
+          .col(pk_uuid(User::Id))
+          .col(string(User::Name))
+          .col(string(User::Email))
+          .col(string_null(User::Avatar))
           .to_owned(),
       )
       .await
@@ -21,16 +22,16 @@ impl MigrationTrait for Migration {
 
   async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
     manager
-      .drop_table(Table::drop().table(Key::Table).to_owned())
+      .drop_table(Table::drop().table(User::Table).to_owned())
       .await
   }
 }
 
 #[derive(DeriveIden)]
-enum Key {
+pub enum User {
   Table,
   Id,
   Name,
-  #[allow(clippy::enum_variant_names)]
-  PrivateKey,
+  Email,
+  Avatar,
 }

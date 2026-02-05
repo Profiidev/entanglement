@@ -6,17 +6,19 @@ use centaurus::{
     logging::init_logging,
     router::base_router,
   },
-  router_extension,
 };
 #[cfg(debug_assertions)]
 use dotenv::dotenv;
 use tracing::info;
 
-use crate::config::Config;
+use crate::{config::Config, rate_limit::RateLimiter};
 
+mod auth;
 mod config;
 mod db;
-mod dummy;
+mod gravatar;
+mod rate_limit;
+mod user;
 
 #[tokio::main]
 async fn main() {
@@ -27,30 +29,27 @@ async fn main() {
   init_logging(&config.base);
 
   let listener = listener_setup(config.base.port).await;
+  let mut rate_limiter = RateLimiter::default();
 
-  let app = base_router(api_router(), &config.base, &config.metrics)
-    .await
-    .state(config)
-    .await;
+  let mut router = api_router(&mut rate_limiter);
+  router = base_router(router, &config.base, &config.metrics).await;
+  let app = state(router, config).await;
+
+  rate_limiter.init();
 
   info!("Starting application");
   run_app(listener, app).await;
 }
 
-fn api_router() -> Router {
-  dummy::router()
+fn api_router(rate_limiter: &mut RateLimiter) -> Router {
+  Router::new()
+    .nest("/auth", auth::router(rate_limiter))
+    .nest("/user", user::router())
 }
 
-router_extension!(
-  async fn state(self, config: Config) -> Self {
-    use dummy::dummy;
+async fn state(router: Router, config: Config) -> Router {
+  let db = init_db::<migration::Migrator>(&config.db, &config.db_url).await;
+  let router = auth::state(router, &config, &db).await;
 
-    let db = init_db::<migration::Migrator>(&config.db, &config.db_url).await;
-
-    self
-      .dummy()
-      .await
-      .layer(Extension(db))
-      .layer(Extension(config))
-  }
-);
+  router.layer(Extension(db)).layer(Extension(config))
+}

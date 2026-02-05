@@ -1,5 +1,5 @@
 ARG TARGET=x86_64-unknown-linux-gnu
-ARG RUSTFLAGS="-C target-feature=+crt-static"
+ARG RUSTFLAGS="-C target-feature=+crt-static --cfg reqwest_unstable"
 ARG FRONTEND_DIR=/app/frontend
 
 FROM node:24-alpine AS frontend-builder
