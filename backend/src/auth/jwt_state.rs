@@ -20,7 +20,7 @@ use uuid::Uuid;
 
 use crate::{config::Config, db::DBTrait};
 
-pub const JWT_COOKIE_NAME: &str = "smaug_jwt";
+pub const JWT_COOKIE_NAME: &str = "entanglement_jwt";
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct JwtClaims {
