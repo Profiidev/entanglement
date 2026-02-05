@@ -26,7 +26,7 @@ async fn main() {
   dotenv().ok();
 
   let config = Config::parse();
-  init_logging(&config.base);
+  init_logging(config.base.log_level);
 
   let listener = listener_setup(config.base.port).await;
   let mut rate_limiter = RateLimiter::default();
