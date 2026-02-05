@@ -6,7 +6,9 @@
   import { Button } from 'positron-components/components/ui/button';
   import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 
-  type CliAuthStatus = 'Requesting' | 'Error' | 'Success';
+  type CliAuthStatus = 'Requesting' | 'Error' | 'Success' | 'Finished';
+
+  let { data } = $props();
 
   let status = $state('Requesting' as CliAuthStatus);
   let error = $state(false);
@@ -21,7 +23,11 @@
       error = false;
       status = 'Success';
       code = res.code;
-      sendCliCode(res.code);
+      let ret = await sendCliCode(res.code, data.user?.uuid ?? '');
+      if (!ret) {
+        status = 'Finished';
+        window.close();
+      }
     }
   };
 
@@ -42,6 +48,8 @@
         <p>Trying to authenticate CLI with code:</p>
         <Input value={code} readonly class="my-2 w-full" />
         <p>If it is not working try to paste the code into the CLI manually.</p>
+      {:else if status === 'Finished'}
+        <p>CLI authenticated successfully! You can now close this window.</p>
       {/if}
       {#if error}
         <Button variant="outline" class="mt-4 w-full" onclick={authCli}>

@@ -4,6 +4,7 @@ use crate::{app::App, config::Config};
 
 mod api;
 mod app;
+mod auth;
 mod config;
 mod input;
 mod ui;

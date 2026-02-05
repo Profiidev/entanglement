@@ -17,7 +17,7 @@ pub fn log_level() -> LevelFilter {
   LevelFilter::INFO
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
   pub app_url: Url,
   pub token: Option<String>,

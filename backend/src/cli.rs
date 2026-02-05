@@ -5,7 +5,7 @@ use std::{
 
 use axum::{
   Extension, Json, Router,
-  extract::{FromRequestParts, Path},
+  extract::{FromRequestParts, Query},
   routing::{get, post},
 };
 use centaurus::{bail, error::Result};
@@ -67,7 +67,7 @@ async fn new_code(auth: JwtAuth, state: CliState) -> Json<CodeResponse> {
 }
 
 #[derive(FromRequestParts, Clone, Deserialize)]
-#[from_request(via(Path))]
+#[from_request(via(Query))]
 struct TokenReq {
   code: Uuid,
   user: Uuid,

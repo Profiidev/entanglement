@@ -69,3 +69,12 @@ pub fn wait_for_auth(frame: &mut Frame, app_url: &str) {
   );
   frame.render_widget(waiting_text, waiting_area);
 }
+
+pub fn main(frame: &mut Frame) {
+  let block = Block::bordered().padding(Padding::left(1));
+  let area = block.inner(frame.area());
+  frame.render_widget(block, frame.area());
+
+  let text = Paragraph::new("Authentication successful! You can now use the CLI.");
+  frame.render_widget(text, area);
+}

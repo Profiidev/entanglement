@@ -10,6 +10,6 @@ export const newCliCode = async () => {
   });
 };
 
-export const sendCliCode = async (code: string) => {
-  return await get('http://localhost:16406?code=' + code);
+export const sendCliCode = async (code: string, user: string) => {
+  return await get('http://localhost:16406?code=' + code + '&user=' + user);
 };

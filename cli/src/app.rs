@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use centaurus::error::Result;
 use ratatui::{
   DefaultTerminal, Frame,
@@ -7,6 +9,7 @@ use url::Url;
 
 use crate::{
   api::ApiClient,
+  auth::CodeServer,
   config::Config,
   input::{InputField, InputMode},
   ui,
@@ -22,10 +25,10 @@ pub enum App {
     config: Config,
     api: ApiClient,
     error: Option<String>,
+    code_server: CodeServer,
   },
-  Main {
-    config: Config,
-  },
+  #[allow(dead_code)]
+  Main { config: Config, api: ApiClient },
 }
 
 impl App {
@@ -39,17 +42,22 @@ impl App {
     if !api.is_authenticated() {
       Self::wait_for_auth(config).await
     } else {
-      Ok(Self::Main { config })
+      Ok(Self::main(api, config))
     }
   }
 
   pub async fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
     terminal.clear()?;
-
     loop {
       terminal.draw(|frame| self.render(frame))?;
-      let event = event::read()?;
-      self.handle_event(event).await;
+
+      // This limits the fps to 10
+      if event::poll(Duration::from_millis(100))? {
+        let event = event::read()?;
+        self.handle_event(event).await;
+      }
+
+      self.update().await;
     }
   }
 
@@ -57,7 +65,30 @@ impl App {
     match self {
       App::EnterAppUrl { field, error, .. } => ui::app_url(frame, field, error),
       App::WaitForAuth { config, .. } => ui::wait_for_auth(frame, config.app_url.as_str()),
-      _ => unimplemented!(),
+      App::Main { .. } => ui::main(frame),
+    }
+  }
+
+  async fn update(&mut self) {
+    #[allow(clippy::single_match)]
+    match self {
+      App::WaitForAuth {
+        code_server,
+        api,
+        config,
+        ..
+      } => {
+        if let Some(token) = code_server.get_code() {
+          code_server.cleanup();
+          api.set_token(token.clone());
+          config.token = Some(token);
+          config.save().await.ok();
+          *self = Self::main(api.clone(), config.clone());
+        } else {
+          eprintln!("Waiting for auth...");
+        }
+      }
+      _ => {}
     }
   }
 
@@ -90,7 +121,12 @@ impl App {
           }
         }
       }
-      App::WaitForAuth { config, api, error } => {
+      App::WaitForAuth {
+        config,
+        error,
+        code_server,
+        ..
+      } => {
         if let Event::Key(key) = &event {
           match key.code {
             KeyCode::Enter => {
@@ -100,6 +136,7 @@ impl App {
               }
             }
             KeyCode::Backspace => {
+              code_server.cleanup();
               *self = Self::enter_app_url();
             }
             _ => {}
@@ -140,9 +177,14 @@ impl App {
     let api = ApiClient::new(config.app_url.clone(), config.token.clone()).await?;
 
     Ok(Self::WaitForAuth {
+      code_server: CodeServer::new(config.app_url.clone()).await?,
       config,
       api,
       error: None,
     })
+  }
+
+  fn main(api: ApiClient, config: Config) -> Self {
+    Self::Main { api, config }
   }
 }

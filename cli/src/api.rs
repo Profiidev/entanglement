@@ -2,6 +2,7 @@ use centaurus::error::Result;
 use reqwest::{Client, Response};
 use url::Url;
 
+#[derive(Clone)]
 pub struct ApiClient {
   client: Client,
   api_url: Url,
@@ -29,6 +30,10 @@ impl ApiClient {
     self.token.is_some()
   }
 
+  pub fn set_token(&mut self, token: String) {
+    self.token = Some(token);
+  }
+
   pub async fn test_token(&self) -> Result<bool> {
     if self.token.is_none() {
       return Ok(false);
@@ -41,6 +46,16 @@ impl ApiClient {
 
     let valid: bool = response.json().await?;
     Ok(valid)
+  }
+
+  pub async fn request_token(&mut self, code: &str, user: &str) -> Result<String> {
+    let response = self
+      .send_request(&format!("/api/cli?code={}&user={}", code, user))
+      .await?;
+    let token: String = response.text().await?;
+
+    self.token = Some(token.clone());
+    Ok(token)
   }
 
   async fn send_request(&self, path: &str) -> Result<Response> {
