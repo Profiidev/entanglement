@@ -6,8 +6,8 @@ use std::{
 
 use axum::{
   Extension, Json, Router,
-  extract::{FromRequestParts, Query},
-  routing::get,
+  extract::{FromRequest, FromRequestParts, Query},
+  routing::{get, post},
 };
 use axum_extra::extract::{CookieJar, cookie::Cookie};
 use centaurus::{
@@ -35,7 +35,7 @@ pub const OIDC_STATE: &str = "oidc_state";
 
 pub fn router(rate_limiter: &mut RateLimiter) -> Router {
   Router::new()
-    .route("/url", get(oidc_url))
+    .route("/url", post(oidc_url))
     .layer(GovernorLayer::new(rate_limiter.create_limiter()))
     .route("/callback", get(oidc_callback))
 }
@@ -48,6 +48,7 @@ pub struct OidcState(Arc<Mutex<OidcConfig>>);
 struct OidcConfig {
   state: HashMap<Uuid, Instant>,
   nonce: HashMap<Uuid, Instant>,
+  redirect: HashMap<Uuid, (Instant, String)>,
   issuer: String,
   authorization_endpoint: Url,
   token_endpoint: Url,
@@ -92,6 +93,9 @@ impl OidcState {
           lock
             .nonce
             .retain(|_, &mut instant| now.duration_since(instant) < expiration_duration);
+          lock
+            .redirect
+            .retain(|_, (instant, _)| now.duration_since(*instant) < expiration_duration);
         }
       }
     });
@@ -136,6 +140,7 @@ impl OidcConfig {
     Ok(Self {
       state: Default::default(),
       nonce: Default::default(),
+      redirect: Default::default(),
       issuer: config.issuer,
       authorization_endpoint: config.authorization_endpoint,
       token_endpoint: config.token_endpoint,
@@ -204,10 +209,17 @@ struct OidcResponse {
   url: String,
 }
 
+#[derive(Deserialize, FromRequest)]
+#[from_request(via(Json))]
+struct OidcUrlRequest {
+  redirect: String,
+}
+
 async fn oidc_url(
   state: OidcState,
   jwt: JwtState,
   mut cookies: CookieJar,
+  OidcUrlRequest { redirect }: OidcUrlRequest,
 ) -> Result<(CookieJar, Json<OidcResponse>)> {
   let mut config = state.0.lock().await;
   let state = Uuid::new_v4();
@@ -250,6 +262,7 @@ async fn oidc_url(
   cookies = cookies.add(jwt.create_cookie(OIDC_STATE, state.to_string()));
 
   config.nonce.insert(nonce, Instant::now());
+  config.redirect.insert(state, (Instant::now(), redirect));
 
   Ok((
     cookies,
@@ -299,12 +312,12 @@ async fn oidc_callback(
 
   #[allow(clippy::explicit_auto_deref)]
   let (path, error, mut cookies) =
-    check_code(error, code, &mut *config, &db, cookies, &jwt).await?;
+    check_code(error, code, &mut *config, &db, cookies, &jwt, state).await?;
 
   cookies = cookies.remove(Cookie::from(OIDC_STATE));
 
   let mut url = config.app_url.clone();
-  url.set_path(path);
+  url.set_path(&path);
   url.set_query(error.map(|e| format!("error={e}")).as_deref());
 
   Ok((cookies, Redirect::found(url.to_string())))
@@ -317,12 +330,13 @@ async fn check_code(
   db: &Connection,
   mut cookies: CookieJar,
   jwt: &JwtState,
-) -> Result<(&'static str, Option<String>, CookieJar)> {
+  state: Uuid,
+) -> Result<(String, Option<String>, CookieJar)> {
   if let Some(error) = error {
-    return Ok(("/login", Some(error), cookies));
+    return Ok(("/login".into(), Some(error), cookies));
   }
   let Some(code) = code else {
-    return Ok(("/login", Some("missing_code".to_string()), cookies));
+    return Ok(("/login".into(), Some("missing_code".to_string()), cookies));
   };
 
   let mut form = HashMap::new();
@@ -362,11 +376,17 @@ async fn check_code(
   }
   let res: AuthInfo = res.json().await?;
 
+  let redirect = config
+    .redirect
+    .remove(&state)
+    .map(|(_, redirect)| redirect)
+    .unwrap_or_else(|| "/".to_string());
+
   if let Some(user) = db.user().try_get_user_by_email(&res.email).await? {
     debug!("OIDC user authenticated: {}", user.id);
     cookies = cookies.add(jwt.create_token(user.id)?);
 
-    return Ok(("/", None, cookies));
+    return Ok((redirect, None, cookies));
   }
 
   let user = db.user().create_user(res.name, res.email).await?;
@@ -374,5 +394,5 @@ async fn check_code(
   debug!("OIDC user authenticated: {}", user);
   cookies = cookies.add(jwt.create_token(user)?);
 
-  Ok(("/", None, cookies))
+  Ok((redirect, None, cookies))
 }

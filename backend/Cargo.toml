@@ -48,6 +48,7 @@ base64 = "0.22.1"
 md5 = "0.8.0"
 governor = "0.10.4"
 time = "0.3.46"
+dashmap = "6.1.0"
 
 [[bin]]
 name = "backend"

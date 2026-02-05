@@ -6,6 +6,6 @@ export const load: LayoutServerLoad = ({ cookies, url }) => {
   let cookie = cookies.get('entanglement_jwt');
 
   if (!cookie && !noSidebarPaths.includes(url.pathname)) {
-    redirect(302, '/login');
+    redirect(302, '/login?redirect=' + url.pathname);
   }
 };

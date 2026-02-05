@@ -1,4 +1,4 @@
-import { get, ResponseType } from 'positron-components/backend';
+import { get, post, ResponseType } from 'positron-components/backend';
 
 export const testToken = async () => {
   let res = await get<boolean>('/api/auth/test_token', {
@@ -10,9 +10,10 @@ export const testToken = async () => {
   }
 };
 
-export const getOidcUrl = async () => {
-  let res = await get<{ url: string }>('/api/auth/oidc/url', {
-    res_type: ResponseType.Json
+export const getOidcUrl = async (redirect: string) => {
+  let res = await post<{ url: string }>('/api/auth/oidc/url', {
+    res_type: ResponseType.Json,
+    body: { redirect }
   });
 
   if (typeof res === 'object') {

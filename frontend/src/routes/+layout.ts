@@ -12,8 +12,7 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
     user !== RequestError.Unauthorized &&
     !noSidebarPaths.includes(url.pathname)
   ) {
-    console.log('User not authorized, redirecting to login', user);
-    redirect(302, '/login');
+    redirect(302, '/login?redirect=' + url.pathname);
   }
 
   if (typeof user === 'string') {

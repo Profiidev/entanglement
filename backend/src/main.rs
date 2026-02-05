@@ -14,6 +14,7 @@ use tracing::info;
 use crate::{config::Config, rate_limit::RateLimiter};
 
 mod auth;
+mod cli;
 mod config;
 mod db;
 mod gravatar;
@@ -45,11 +46,13 @@ fn api_router(rate_limiter: &mut RateLimiter) -> Router {
   Router::new()
     .nest("/auth", auth::router(rate_limiter))
     .nest("/user", user::router())
+    .nest("/cli", cli::router(rate_limiter))
 }
 
 async fn state(router: Router, config: Config) -> Router {
   let db = init_db::<migration::Migrator>(&config.db, &config.db_url).await;
   let router = auth::state(router, &config, &db).await;
+  let router = cli::state(router);
 
   router.layer(Extension(db)).layer(Extension(config))
 }
