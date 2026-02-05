@@ -9,16 +9,16 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-  pub async fn new(api_url: Url, token: String) -> Result<Self> {
+  pub async fn new(api_url: Url, token: Option<String>) -> Result<Self> {
     let client = Client::new();
 
     let mut api = Self {
       client,
       api_url,
-      token: Some(token),
+      token,
     };
 
-    if !api.test_token().await? {
+    if api.is_authenticated() && !api.test_token().await? {
       api.token = None;
     }
 

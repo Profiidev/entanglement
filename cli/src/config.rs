@@ -20,7 +20,7 @@ pub fn log_level() -> LevelFilter {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
   pub app_url: Url,
-  pub token: String,
+  pub token: Option<String>,
 }
 
 impl Config {
@@ -29,7 +29,7 @@ impl Config {
     Ok(data_dir.join("entanglement").join("config.json"))
   }
 
-  pub fn new(app_url: Url, token: String) -> Self {
+  pub fn new(app_url: Url, token: Option<String>) -> Self {
     Self { app_url, token }
   }
 
