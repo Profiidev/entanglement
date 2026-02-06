@@ -1,6 +1,7 @@
 ARG TARGET=x86_64-unknown-linux-gnu
 ARG RUSTFLAGS="-C target-feature=+crt-static --cfg reqwest_unstable"
 ARG FRONTEND_DIR=/app/frontend
+ARG BACKEND_URL="http://localhost:8000"
 
 FROM node:24-alpine AS frontend-builder
 
@@ -10,6 +11,8 @@ COPY frontend/package.json ./
 COPY package-lock.json package.json ../
 
 RUN npm ci
+
+ARG BACKEND_URL
 
 COPY frontend/svelte.config.js frontend/tsconfig.json frontend/vite.config.ts ./
 COPY frontend/src ./src
@@ -26,6 +29,8 @@ COPY backend/Cargo.toml backend/
 COPY backend/entity/Cargo.toml backend/entity/
 COPY backend/migration/Cargo.toml backend/migration/
 COPY ./Cargo.lock ./Cargo.toml ./
+
+RUN sed -i '/^members = /c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
@@ -52,6 +57,8 @@ COPY backend/entity/src backend/entity/src
 COPY backend/migration/Cargo.toml backend/migration/
 COPY backend/migration/src backend/migration/src
 COPY ./Cargo.lock ./Cargo.toml ./
+
+RUN sed -i '/^members = /c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
