@@ -34,10 +34,16 @@ pub enum App {
 impl App {
   pub async fn new(config: Option<Config>) -> Result<Self> {
     let Some(config) = config else {
-      return Ok(Self::enter_app_url());
+      return Ok(Self::enter_app_url(None, None, None));
     };
 
-    let api = ApiClient::new(config.app_url.clone(), config.token.clone()).await?;
+    let Ok(api) = ApiClient::new(config.app_url.clone(), config.token.clone()).await else {
+      return Ok(Self::enter_app_url(
+        config.token,
+        Some("Failed to reach server. Check URL and try again.".into()),
+        Some(config.app_url.to_string()),
+      ));
+    };
 
     if !api.is_authenticated() {
       Self::wait_for_auth(config).await
@@ -84,8 +90,6 @@ impl App {
           config.token = Some(token);
           config.save().await.ok();
           *self = Self::main(api.clone(), config.clone());
-        } else {
-          eprintln!("Waiting for auth...");
         }
       }
       _ => {}
@@ -137,7 +141,8 @@ impl App {
             }
             KeyCode::Backspace => {
               code_server.cleanup();
-              *self = Self::enter_app_url();
+              *self =
+                Self::enter_app_url(config.token.clone(), None, Some(config.app_url.to_string()));
             }
             _ => {}
           }
@@ -159,29 +164,34 @@ impl App {
     }
   }
 
-  fn enter_app_url() -> Self {
+  fn enter_app_url(token: Option<String>, error: Option<String>, value: Option<String>) -> Self {
     let mut field = InputField::new(
       "App URL".into(),
       Some("https://entanglement.example.com".into()),
+      value,
     );
     field.set_mode(InputMode::Editing);
 
     Self::EnterAppUrl {
-      token: None,
+      token,
       field,
-      error: None,
+      error,
     }
   }
 
   async fn wait_for_auth(config: Config) -> Result<Self> {
     let api = ApiClient::new(config.app_url.clone(), config.token.clone()).await?;
 
-    Ok(Self::WaitForAuth {
-      code_server: CodeServer::new(config.app_url.clone()).await?,
-      config,
-      api,
-      error: None,
-    })
+    if api.is_authenticated() {
+      Ok(Self::main(api, config))
+    } else {
+      Ok(Self::WaitForAuth {
+        code_server: CodeServer::new(config.app_url.clone()).await?,
+        config,
+        api,
+        error: None,
+      })
+    }
   }
 
   fn main(api: ApiClient, config: Config) -> Self {

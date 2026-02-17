@@ -23,9 +23,14 @@ pub enum InputMode {
 }
 
 impl InputField {
-  pub fn new(title: String, placeholder: Option<String>) -> Self {
+  pub fn new(title: String, placeholder: Option<String>, value: Option<String>) -> Self {
+    let mut input = Input::default();
+    if let Some(value) = value {
+      input = input.with_value(value);
+    }
+
     Self {
-      input: Input::default(),
+      input,
       input_model: InputMode::Normal,
       title,
       placeholder,
