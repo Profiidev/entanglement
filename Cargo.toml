@@ -1,3 +1,0 @@
-[workspace]
-members = ["backend", "backend/entity", "backend/migration", "cli"]
-resolver = "3"
