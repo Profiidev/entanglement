@@ -18,7 +18,7 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             args: --linux --package-types "appimage"
-            bundle: linux
+            bundle: linux/appimage
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             args: --windows --package-types "msi"
@@ -26,7 +26,11 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             args: --macos --package-types "dmg"
-            bundle: macos
+            bundle: macos/macos
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            args: --android --package-types "apk"
+            bundle: android/android
 
     steps:
       - uses: actions/checkout@v6
@@ -64,4 +68,14 @@ jobs:
           Remove-Item dx.zip
 
       - name: Build app
-        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
+        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* . && ls -la .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: entanglement-${{ matrix.target }}
+          path: |
+            *.dmg
+            *.msi
+            *.AppImage
+            *.apk
