@@ -43,7 +43,18 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libglib2.0-dev
-          version: 1.0
+          version: ${{ matrix.os }}
+
+      - name: Setup JDK 17 (android)
+        if: matrix.os == 'ubuntu-24.04-arm''
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK (android)
+        if: matrix.os == 'ubuntu-24.04-arm''
+        uses: android-actions/setup-android@v4
 
       - name: Cache cargo and rust files
         id: rust_cache
