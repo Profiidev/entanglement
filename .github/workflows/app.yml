@@ -52,9 +52,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Cache NDK
+        if: matrix.os == 'ubuntu-24.04-arm'
+        uses: actions/cache@v5
+        with:
+          path: /usr/local/lib/android/sdk/ndk/26.1.10909125
+          key: ndk-${{ runner.os }}-26.1.10909125
+
       - name: Setup Android SDK (android)
         if: matrix.os == 'ubuntu-24.04-arm'
         uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Setup Android NDK (android)
+        if: matrix.os == 'ubuntu-24.04-arm'
+        run: sdkmanager "ndk;26.1.10909125"
 
       - name: Cache cargo and rust files
         id: rust_cache
@@ -79,7 +92,7 @@ jobs:
           Remove-Item dx.zip
 
       - name: Build app
-        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
+        run: cd app && cargo build --release && dx bundle --release ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
