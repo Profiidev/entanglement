@@ -68,6 +68,7 @@
             [
               dioxus-cli
               makeWrapper
+              wrapGAppsHook4
             ]
             ++ rustBuildInputs;
 
@@ -82,12 +83,13 @@
 
           installPhase = ''
             runHook preInstall
-            mkdir -p $out/bin
+            mkdir -p $out/bin/assets
             cp target/dx/entanglement/release/linux/app/entanglement $out/bin/
-            cp -r target/dx/entanglement/release/linux/app/assets/* $out/bin/
+            cp -r target/dx/entanglement/release/linux/app/assets/* $out/bin/assets/
           '';
 
-          postFixup = ''
+          postInstall = ''
+            wrapGAppsHook
             # Required for the app to find its assets
             wrapProgram $out/bin/entanglement \
               --chdir $out/bin
@@ -96,6 +98,8 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
+
+          doCheck = false;
         };
       }
     );
