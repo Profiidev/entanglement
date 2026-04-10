@@ -78,6 +78,8 @@ FROM node:24-alpine
 ENV DB_URL="sqlite:/data/entanglement.db?mode=rwc"
 ENV SITE_URL="http://localhost:8000"
 
+RUN mkdir -p /data
+
 COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 WORKDIR /app
