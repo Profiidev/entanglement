@@ -1,22 +1,29 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
-import { getUserInfo, type UserInfo } from '$lib/backend/user.svelte';
-import { noSidebarPaths } from '$lib/components/navigation/sidebar/items.svelte';
-import { RequestError } from 'positron-components/backend';
+import { noSidebarPaths } from '$lib/components/nav.svelte';
+import { info, isSetup } from '$lib/client';
 
 export const load: LayoutLoad = async ({ fetch, url }) => {
-  let user: UserInfo | RequestError | undefined = await getUserInfo(fetch);
+  let { data: status, error } = await isSetup({ fetch });
+  if (error) return {};
 
-  if (
-    typeof user === 'string' &&
-    user !== RequestError.Unauthorized &&
-    !noSidebarPaths.includes(url.pathname)
-  ) {
-    redirect(302, '/login?redirect=' + url.pathname);
+  if (!status?.is_setup && url.pathname !== '/setup') {
+    redirect(302, '/setup');
   }
 
-  if (typeof user === 'string') {
-    user = undefined;
+  if (!status?.is_setup && url.pathname === '/setup') {
+    return {};
+  }
+
+  let { data: user, response } = await info({ fetch });
+
+  if (
+    !user &&
+    response.status !== 401 &&
+    !noSidebarPaths.includes(url.pathname) &&
+    !status?.is_setup
+  ) {
+    redirect(302, '/setup');
   }
 
   return {

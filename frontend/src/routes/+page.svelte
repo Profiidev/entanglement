@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { data } = $props();
+  import { Label } from 'positron-components/components/ui/label';
 </script>
 
-<p>{data.user?.name}</p>
+<Label>Overview</Label>

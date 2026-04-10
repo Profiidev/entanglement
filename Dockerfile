@@ -1,6 +1,11 @@
-ARG TARGET=x86_64-unknown-linux-gnu
+ARG TARGETARCH
+# If TARGETARCH is amd64, result is x86_64. If arm64, result is aarch64.
+ARG RUST_ARCH=${TARGETARCH/amd64/x86_64}
+ARG RUST_ARCH=${RUST_ARCH/arm64/aarch64}
+ARG TARGET=${RUST_ARCH}-unknown-linux-gnu
 ARG RUSTFLAGS="-C target-feature=+crt-static --cfg reqwest_unstable"
 ARG FRONTEND_DIR=/app/frontend
+ARG FRONTEND_URL="http://localhost:3000/"
 ARG BACKEND_URL="http://localhost:8000"
 
 FROM node:24-alpine AS frontend-builder
@@ -12,6 +17,7 @@ COPY package-lock.json package.json ../
 
 RUN npm ci
 
+ARG FRONTEND_URL
 ARG BACKEND_URL
 
 COPY frontend/svelte.config.js frontend/tsconfig.json frontend/vite.config.ts ./
@@ -30,7 +36,7 @@ COPY backend/entity/Cargo.toml backend/entity/
 COPY backend/migration/Cargo.toml backend/migration/
 COPY ./Cargo.lock ./Cargo.toml ./
 
-RUN sed -i '/^members = /c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
+RUN sed -i '/^members = \[/,/\]/c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
@@ -42,6 +48,7 @@ FROM ghcr.io/profiidev/images/rust-gnu-builder:main AS backend-builder
 ARG TARGET
 ARG RUSTFLAGS
 ARG FRONTEND_DIR
+ARG FRONTEND_URL
 
 COPY --from=backend-planner /app/recipe.json .
 
@@ -58,7 +65,7 @@ COPY backend/migration/Cargo.toml backend/migration/
 COPY backend/migration/src backend/migration/src
 COPY ./Cargo.lock ./Cargo.toml ./
 
-RUN sed -i '/^members = /c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
+RUN sed -i '/^members = \[/,/\]/c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
@@ -68,7 +75,10 @@ RUN \
 
 FROM node:24-alpine
 
-ARG FRONTEND_DIR
+ENV DB_URL="sqlite:/data/entanglement.db?mode=rwc"
+ENV SITE_URL="http://localhost:8000"
+
+RUN mkdir -p /data
 
 COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
