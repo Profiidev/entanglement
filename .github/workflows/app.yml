@@ -12,7 +12,6 @@ jobs:
   build-app:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -32,7 +31,7 @@ jobs:
             bundle: dmg
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            args: --android --package-types "apk"
+            args: --android --package-types "apk" --target aarch64-linux-android
             bundle_path: release/android/app/app/build/outputs/apk/release
             bundle: apk
 
@@ -110,6 +109,7 @@ jobs:
         run: cd app && dx bundle --release ${{ matrix.args }} && mv ../target/dx/entanglement/${{ matrix.bundle_path }}/* ..
 
       - name: Upload artifact
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v7
         with:
           name: entanglement-${{ matrix.bundle }}
