@@ -17,6 +17,12 @@ jobs:
         with:
           components: clippy,rustfmt
 
+      - name: install dependencies (ubuntu only)
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libglib2.0-dev
+          version: 1.0
+
       - name: Cache cargo and rust files
         id: rust_cache
         uses: Swatinem/rust-cache@v2

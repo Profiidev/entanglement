@@ -12,6 +12,7 @@ jobs:
   build-app:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -58,9 +59,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           curl -o dx.zip -L https://github.com/DioxusLabs/dioxus/releases/latest/download/dx-${{ matrix.target }}.zip
-          tar -xf dx.zip -C C:\dx
-          del dx.zip
-          echo "C:\dx" >> $GITHUB_PATH
+          Expand-Archive -Path dx.zip -DestinationPath "$env:USERPROFILE\bin"
+          echo "$env:USERPROFILE\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Remove-Item dx.zip
 
       - name: Build app
         run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
