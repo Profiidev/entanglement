@@ -27,8 +27,8 @@ jobs:
             target: aarch64-apple-darwin
             args: --macos --package-types "dmg"
             bundle: macos/macos
-          - os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
             args: --android --package-types "apk"
             bundle: android/android
 
@@ -39,34 +39,34 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install dependencies (ubuntu only)
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm'
+        if: matrix.os == 'ubuntu-latest'
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libglib2.0-dev
           version: ${{ matrix.os }}
 
       - name: Setup JDK 17 (android)
-        if: matrix.os == 'ubuntu-24.04-arm'
+        if: matrix.bundle == 'android/android'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Cache NDK
-        if: matrix.os == 'ubuntu-24.04-arm'
+        if: matrix.bundle == 'android/android'
         uses: actions/cache@v5
         with:
           path: /usr/local/lib/android/sdk/ndk/26.1.10909125
           key: ndk-${{ runner.os }}-26.1.10909125
 
       - name: Setup Android SDK (android)
-        if: matrix.os == 'ubuntu-24.04-arm'
+        if: matrix.bundle == 'android/android'
         uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools'
 
       - name: Setup Android NDK (android)
-        if: matrix.os == 'ubuntu-24.04-arm'
+        if: matrix.bundle == 'android/android'
         run: sdkmanager "ndk;26.1.10909125"
 
       - name: Cache cargo and rust files
