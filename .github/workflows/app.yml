@@ -18,19 +18,23 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             args: --linux --package-types "appimage"
-            bundle: linux/appimage
+            bundle_path: bundle/linux/appimage
+            bundle: appimage
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             args: --windows --package-types "msi"
-            bundle: windows/msi
+            bundle_path: bundle/windows/msi
+            bundle: msi
           - os: macos-latest
             target: aarch64-apple-darwin
             args: --macos --package-types "dmg"
-            bundle: macos/macos
+            bundle_path: bundle/macos/macos
+            bundle: dmg
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             args: --android --package-types "apk"
-            bundle: android/android
+            bundle_path: release/android/app/app/build/outputs/apk/release
+            bundle: apk
 
     steps:
       - uses: actions/checkout@v6
@@ -46,35 +50,46 @@ jobs:
           version: ${{ matrix.os }}
 
       - name: Setup JDK 17 (android)
-        if: matrix.bundle == 'android/android'
+        if: matrix.bundle == 'apk'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Cache NDK
-        if: matrix.bundle == 'android/android'
+        if: matrix.bundle == 'apk'
         uses: actions/cache@v5
         with:
           path: /usr/local/lib/android/sdk/ndk/26.1.10909125
           key: ndk-${{ runner.os }}-26.1.10909125
 
       - name: Setup Android SDK (android)
-        if: matrix.bundle == 'android/android'
+        if: matrix.bundle == 'apk'
         uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools'
 
       - name: Setup Android NDK (android)
-        if: matrix.bundle == 'android/android'
+        if: matrix.bundle == 'apk'
         run: sdkmanager "ndk;26.1.10909125"
+
+      - name: Setup Android Signing (android)
+        if: matrix.bundle == 'apk'
+        run: |
+          echo "[bundle.android]
+          jks_file = \"upload-keystore.jks\"
+          jks_password = \"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}\"
+          key_alias = \"upload\"
+          key_password = \"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}\"
+          " >> app/Dioxus.toml
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > upload-keystore.jks
 
       - name: Cache cargo and rust files
         id: rust_cache
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: 'app_release_cache-${{ matrix.platform }}'
+          shared-key: 'app_release_cache-${{ matrix.bundle }}'
 
       - name: Install dx
         if: matrix.os != 'windows-latest'
@@ -92,7 +107,7 @@ jobs:
           Remove-Item dx.zip
 
       - name: Build app
-        run: cd app && cargo build --release && dx bundle --release ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* ..
+        run: cd app && dx bundle --release ${{ matrix.args }} && mv ../target/dx/entanglement/${{ matrix.bundle_path }}/* ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

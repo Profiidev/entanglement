@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "entanglement"
 version = "0.1.0"
 authors = ["ProfiiDev <92174452+Profiidev@users.noreply.github.com>"]
 edition = "2021"

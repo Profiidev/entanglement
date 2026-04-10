@@ -1,7 +1,7 @@
 [application]
 
 [bundle]
-identifier = "io.profidev"
+identifier = "io.profidev.entanglement"
 publisher = "Profidev"
 
 [web.app]
