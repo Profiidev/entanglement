@@ -22,7 +22,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             args: --windows --package-types "msi"
-            bundle: windows
+            bundle: windows/msi
           - os: macos-latest
             target: aarch64-apple-darwin
             args: --macos --package-types "dmg"
@@ -39,7 +39,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install dependencies (ubuntu only)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm'
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libglib2.0-dev
@@ -68,7 +68,7 @@ jobs:
           Remove-Item dx.zip
 
       - name: Build app
-        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* . && ls -la .
+        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
