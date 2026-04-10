@@ -11,7 +11,10 @@
     gsettings-desktop-schemas
   ];
 
+  android.enable = true;
+
   enterShell = ''
     export XDG_DATA_DIRS="$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS"
+    export RUSTC_WRAPPER=""
   '';
 }

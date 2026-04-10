@@ -3,6 +3,6 @@ members = [
     "app",
     "backend",
     "backend/entity",
-    "backend/migration", "app",
+    "backend/migration",
 ]
 resolver = "3"

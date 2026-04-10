@@ -36,6 +36,8 @@ COPY backend/entity/Cargo.toml backend/entity/
 COPY backend/migration/Cargo.toml backend/migration/
 COPY ./Cargo.lock ./Cargo.toml ./
 
+RUN sed -i '/^members = \[/,/\]/c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
+
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/app/target \
@@ -62,6 +64,8 @@ COPY backend/entity/src backend/entity/src
 COPY backend/migration/Cargo.toml backend/migration/
 COPY backend/migration/src backend/migration/src
 COPY ./Cargo.lock ./Cargo.toml ./
+
+RUN sed -i '/^members = \[/,/\]/c\members = ["backend", "backend/entity", "backend/migration"]' Cargo.toml
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \

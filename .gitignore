@@ -7,3 +7,5 @@ postgres/
 /result
 /.direnv/
 /.devenv/
+local.properties
+/.android/
