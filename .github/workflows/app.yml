@@ -63,4 +63,4 @@ jobs:
           echo "C:\dx" >> $GITHUB_PATH
 
       - name: Build app
-        run: cd app && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
+        run: cd app && cargo build --release && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
