@@ -17,12 +17,15 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             args: --linux --package-types "appimage"
+            bundle: linux
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             args: --windows --package-types "msi"
+            bundle: windows
           - os: macos-latest
             target: aarch64-apple-darwin
             args: --macos --package-types "dmg"
+            bundle: macos
 
     steps:
       - uses: actions/checkout@v6
@@ -45,10 +48,19 @@ jobs:
           shared-key: 'app_release_cache-${{ matrix.platform }}'
 
       - name: Install dx
+        if: matrix.os != 'windows-latest'
         run: |
           curl -o dx.tar.gz -L https://github.com/DioxusLabs/dioxus/releases/latest/download/dx-${{ matrix.target }}.tar.gz
           tar -xzf dx.tar.gz -C /usr/local/bin
           rm dx.tar.gz
 
+      - name: Install dx (windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          curl -o dx.zip -L https://github.com/DioxusLabs/dioxus/releases/latest/download/dx-${{ matrix.target }}.zip
+          tar -xf dx.zip -C C:\dx
+          del dx.zip
+          echo "C:\dx" >> $GITHUB_PATH
+
       - name: Build app
-        run: cd app && dx bundle --release ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
+        run: cd app && dx bundle --release --verbose ${{ matrix.args }} && mv ../target/dx/app/bundle/${{ matrix.bundle }}/* .. && ls -la ..
