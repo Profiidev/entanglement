@@ -17,7 +17,9 @@
   "vulnerabilityAlerts": {
     "enabled": true,
     "vulnerabilityFixStrategy": "highest",
-    "schedule": ["at any time"]
+    "schedule": ["at any time"],
+    "automerge": true,
+    "minimumReleaseAge": null
   },
   "osvVulnerabilityAlerts": true,
   "dependencyDashboardOSVVulnerabilitySummary": "unresolved",
