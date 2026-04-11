@@ -55,7 +55,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache NDK
+      - name: Cache NDK (android)
         if: matrix.bundle == 'apk'
         uses: actions/cache@v5
         with:
