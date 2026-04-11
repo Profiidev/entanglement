@@ -1,0 +1,6 @@
+desktop:
+  dx serve --hot-patch
+android:
+  dx serve --hot-patch --android --target aarch64-linux-android
+emulator:
+  dx serve --hot-patch --android

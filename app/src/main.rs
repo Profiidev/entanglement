@@ -8,6 +8,7 @@ use crate::layout::AppLayout;
 
 mod components;
 mod layout;
+mod utils;
 mod views;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
@@ -23,6 +24,9 @@ const DX_COMPONENTS_CSS: Asset = asset!("/assets/dx-components-theme.css");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 
 fn main() {
+  #[cfg(feature = "mobile")]
+  utils::set_android_flags();
+
   #[cfg(feature = "desktop")]
   dioxus::LaunchBuilder::new()
     .with_cfg(
