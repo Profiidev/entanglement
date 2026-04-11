@@ -36,35 +36,35 @@ jobs:
             bundle: apk
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: install dependencies (ubuntu only)
         if: matrix.os == 'ubuntu-latest'
-        uses: awalsh128/cache-apt-pkgs-action@latest
+        uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17 # latest
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libxdo-dev libglib2.0-dev
           version: ${{ matrix.os }}
 
       - name: Setup JDK 17 (android)
         if: matrix.bundle == 'apk'
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Cache NDK (android)
         if: matrix.bundle == 'apk'
-        uses: actions/cache@v5
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         with:
           path: /usr/local/lib/android/sdk/ndk/26.1.10909125
           key: ndk-${{ runner.os }}-26.1.10909125
 
       - name: Setup Android SDK (android)
         if: matrix.bundle == 'apk'
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           packages: 'platform-tools'
 
@@ -85,7 +85,7 @@ jobs:
 
       - name: Cache cargo and rust files
         id: rust_cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           cache-on-failure: true
           shared-key: 'app_release_cache-${{ matrix.bundle }}'
@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload artifact
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: entanglement-${{ matrix.bundle }}
           path: |
