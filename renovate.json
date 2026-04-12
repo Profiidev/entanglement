@@ -11,6 +11,10 @@
       "abandonmentThreshold": "5 years",
       "matchPackageNames": ["dotenvy", "figment"],
       "matchDatasources": ["crate"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "reviewers": ["profiidev"]
     }
   ],
   "osvVulnerabilityAlerts": true,
