@@ -6,6 +6,7 @@ use views::Home;
 
 use crate::layout::AppLayout;
 
+mod comm;
 mod components;
 mod layout;
 mod utils;
