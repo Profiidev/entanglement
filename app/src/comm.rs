@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use dioxus::html::bytes::Bytes;
 use eyre::{ContextCompat, ErrReport};
+use futures::executor::block_on;
 use futures_core::Stream;
 use iroh::{
-  address_lookup::MdnsAddressLookup, endpoint::presets, protocol::Router, Endpoint, EndpointId,
+  Endpoint, EndpointId, address_lookup::MdnsAddressLookup, endpoint::presets, protocol::Router,
 };
-use iroh_blobs::{api::downloader::Downloader, store::mem::MemStore, BlobsProtocol, Hash};
+use iroh_blobs::{BlobsProtocol, Hash, api::downloader::Downloader, store::mem::MemStore};
 
 pub struct Communication {
   endpoint: Endpoint,
@@ -57,14 +58,16 @@ impl Communication {
 
     Ok(self.store.blobs().get_bytes(hash).await?)
   }
-
-  pub async fn shutdown(&self) {
-    self.router.shutdown().await.unwrap();
-  }
 }
 
 impl PartialEq for Communication {
   fn eq(&self, other: &Self) -> bool {
     self.endpoint.id() == other.endpoint.id()
+  }
+}
+
+impl Drop for Communication {
+  fn drop(&mut self) {
+    let _ = block_on(self.router.shutdown());
   }
 }
