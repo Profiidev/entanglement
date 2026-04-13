@@ -10,12 +10,15 @@ pub fn AppLayout() -> Element {
   #[cfg(feature = "desktop")]
   let header = rsx! {
     Header {  }
-      Separator { class: "separator bg-border!" }
+    Separator { class: "separator bg-border!" }
   };
 
   rsx! {
     {header}
 
-    Outlet::<Route> {}
+    div {
+      class: "overflow-hidden h-full",
+      Outlet::<Route> {}
+    }
   }
 }

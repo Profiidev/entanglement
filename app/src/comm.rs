@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use dioxus::html::bytes::Bytes;
+use eyre::{ContextCompat, ErrReport};
 use futures_core::Stream;
 use iroh::{
   address_lookup::MdnsAddressLookup, endpoint::presets, protocol::Router, Endpoint, EndpointId,
@@ -13,13 +16,12 @@ pub struct Communication {
 }
 
 impl Communication {
-  pub async fn init() -> Self {
-    //let mdns = MdnsAddressLookup::builder();
+  pub async fn init() -> Result<Arc<Self>, ErrReport> {
+    let mdns = MdnsAddressLookup::builder();
     let endpoint = Endpoint::builder(presets::N0)
-      //.address_lookup(mdns)
+      .address_lookup(mdns)
       .bind()
-      .await
-      .unwrap();
+      .await?;
     let store = MemStore::new();
 
     let blobs = BlobsProtocol::new(&store, None);
@@ -30,33 +32,39 @@ impl Communication {
 
     let downloader = store.downloader(&endpoint);
 
-    Communication {
+    Ok(Arc::new(Communication {
       endpoint,
       store,
       router,
       downloader,
-    }
+    }))
   }
 
   pub async fn send_message(
     &self,
     msg: impl Stream<Item = std::io::Result<Bytes>> + Send + Sync + 'static,
-  ) -> String {
-    let tag = self.store.blobs().add_stream(msg).await.await.unwrap();
-    format!("{}:{}", tag.hash, self.endpoint.id())
+  ) -> Result<String, ErrReport> {
+    let tag = self.store.blobs().add_stream(msg).await.await?;
+    Ok(format!("{}:{}", tag.hash, self.endpoint.id()))
   }
 
-  pub async fn receive_message(&self, tag: &str) -> Bytes {
-    let (hash, id) = tag.split_once(':').unwrap();
-    let hash: Hash = hash.parse().unwrap();
-    let id: EndpointId = id.parse().unwrap();
+  pub async fn receive_message(&self, tag: &str) -> Result<Bytes, ErrReport> {
+    let (hash, id) = tag.split_once(':').context("Invalid Tag")?;
+    let hash: Hash = hash.parse()?;
+    let id: EndpointId = id.parse()?;
 
-    self.downloader.download(hash, Some(id)).await.unwrap();
+    self.downloader.download(hash, Some(id)).await?;
 
-    self.store.blobs().get_bytes(hash).await.unwrap()
+    Ok(self.store.blobs().get_bytes(hash).await?)
   }
 
   pub async fn shutdown(&self) {
     self.router.shutdown().await.unwrap();
+  }
+}
+
+impl PartialEq for Communication {
+  fn eq(&self, other: &Self) -> bool {
+    self.endpoint.id() == other.endpoint.id()
   }
 }
