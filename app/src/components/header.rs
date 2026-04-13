@@ -4,8 +4,8 @@ use crate::components::{
 };
 use dioxus::{desktop::use_window, prelude::*};
 use dioxus_free_icons::{
-  icons::ld_icons::{LdMinus, LdSquare, LdX},
   Icon,
+  icons::ld_icons::{LdMinus, LdSquare, LdX},
 };
 
 const APP_ICON: Asset = asset!("/assets/icon.svg");

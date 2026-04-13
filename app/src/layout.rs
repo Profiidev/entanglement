@@ -1,6 +1,6 @@
+use crate::Route;
 #[cfg(feature = "desktop")]
 use crate::components::{header::Header, separator::Separator};
-use crate::Route;
 use dioxus::prelude::*;
 
 #[component]
