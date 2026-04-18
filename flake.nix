@@ -42,6 +42,7 @@
           webkitgtk_4_1
           xdotool
           perl
+          tailwindcss_4
         ];
       in
       {
@@ -97,6 +98,9 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
+            outputHashes = {
+              "dioxus-attributes-0.1.0" = "sha256-tI26vv7fvNR18KsUJvBTXZ0c7Wc/63Qq88NAWuWMoHs=";
+            };
           };
 
           doCheck = false;

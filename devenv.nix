@@ -9,6 +9,7 @@
     webkitgtk_4_1
     xdotool
     gsettings-desktop-schemas
+    tailwindcss_4
   ];
 
   android.enable = true;

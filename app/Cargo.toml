@@ -2,12 +2,21 @@
 name = "entanglement"
 version = "0.1.0"
 authors = ["ProfiiDev <92174452+Profiidev@users.noreply.github.com>"]
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 dioxus = { version = "0.7.5", features = ["router"] }
+dioxus-clipboard = "0.3.0"
+dioxus-free-icons = { version = "0.10.0", features = ["lucide"] }
+dioxus-primitives = { git = "https://github.com/DioxusLabs/components", version = "0.0.1", default-features = false }
+eyre = "0.6.12"
+futures = "0.3.32"
+futures-core = "0.3.32"
+iroh = { version = "0.97.0", features = ["address-lookup-mdns"] }
+iroh-blobs = "0.99.0"
+sync_wrapper = "1.0.2"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
