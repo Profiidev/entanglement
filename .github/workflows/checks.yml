@@ -48,3 +48,4 @@ jobs:
           svelte_args: "--ignore target"
           tsc: true
           tsc_dir: frontend
+          oxlint: true
