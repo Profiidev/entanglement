@@ -7,14 +7,15 @@ jobs:
     name: Run linters
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       checks: write
       contents: write
     steps:
-      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+      - uses: profiidev/gluon@d715c4a8bd804db764307ad041e73c1c60ec7382 # v0
         id: app-token
         with:
-          client-id: ${{ secrets.COMMIT_BOT_CLIENT_ID }}
-          private-key: ${{ secrets.COMMIT_BOT_PRIVATE_KEY }}
+          url: https://gluon.profidev.io
+          profile: lint
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
@@ -32,7 +33,7 @@ jobs:
         with:
           cache-on-failure: true
           shared-key: "linter_cache"
-      - uses: bahmutov/npm-install@v1
+      - uses: bahmutov/npm-install@20216767ca67f0f7b4d095dc5859c5700a6581cb # v1.12.1
 
       - name: Generate svelte data
         run: |
